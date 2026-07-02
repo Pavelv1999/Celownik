@@ -1,0 +1,856 @@
+from pathlib import Path
+
+html = r'''<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Celownik — красочный интерактивный конспект по дательному падежу в польском языке" />
+  <title>Celownik — дательный падеж в польском</title>
+  <style>
+    :root{
+      --bg:#f7f7ff;
+      --paper:#ffffff;
+      --ink:#23233a;
+      --muted:#6e7088;
+      --violet:#7357d9;
+      --violet-2:#9b7cff;
+      --pink:#ff7ab8;
+      --rose:#ff5c7a;
+      --blue:#4e8cff;
+      --cyan:#39c6d4;
+      --green:#28b887;
+      --yellow:#ffcb57;
+      --orange:#ff9b54;
+      --red:#e84a5f;
+      --line:#e6e7f4;
+      --shadow:0 18px 50px rgba(65,53,135,.13);
+      --radius:24px;
+    }
+
+    *{box-sizing:border-box}
+    html{scroll-behavior:smooth}
+    body{
+      margin:0;
+      font-family:Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background:
+        radial-gradient(circle at 10% 0%, rgba(155,124,255,.16), transparent 32%),
+        radial-gradient(circle at 100% 10%, rgba(255,122,184,.16), transparent 30%),
+        linear-gradient(180deg,#fbfbff 0%,#f5f7ff 100%);
+      color:var(--ink);
+      line-height:1.65;
+    }
+
+    a{color:inherit}
+    .layout{
+      display:grid;
+      grid-template-columns:290px minmax(0,1fr);
+      min-height:100vh;
+    }
+
+    aside{
+      position:sticky;
+      top:0;
+      height:100vh;
+      padding:24px 18px;
+      border-right:1px solid rgba(115,87,217,.12);
+      background:rgba(255,255,255,.82);
+      backdrop-filter:blur(18px);
+      overflow:auto;
+      z-index:10;
+    }
+
+    .brand{
+      background:linear-gradient(135deg,var(--violet),var(--pink));
+      color:#fff;
+      padding:20px;
+      border-radius:22px;
+      box-shadow:0 14px 32px rgba(115,87,217,.25);
+      margin-bottom:18px;
+    }
+    .brand small{
+      display:block;
+      opacity:.82;
+      text-transform:uppercase;
+      letter-spacing:.12em;
+      font-weight:800;
+      font-size:.72rem;
+    }
+    .brand h1{
+      margin:5px 0 2px;
+      font-size:1.7rem;
+      line-height:1.1;
+    }
+    .brand p{margin:0;opacity:.9;font-size:.9rem}
+
+    .nav-title{
+      margin:20px 10px 8px;
+      font-size:.76rem;
+      font-weight:900;
+      text-transform:uppercase;
+      letter-spacing:.1em;
+      color:var(--muted);
+    }
+
+    nav a{
+      display:flex;
+      gap:10px;
+      align-items:center;
+      text-decoration:none;
+      padding:10px 12px;
+      border-radius:14px;
+      color:#4f506a;
+      font-weight:700;
+      font-size:.92rem;
+      margin:3px 0;
+      transition:.2s ease;
+    }
+    nav a:hover, nav a.active{
+      background:linear-gradient(90deg,rgba(115,87,217,.12),rgba(255,122,184,.10));
+      color:var(--violet);
+      transform:translateX(3px);
+    }
+    nav .num{
+      width:27px;height:27px;border-radius:9px;
+      display:grid;place-items:center;
+      color:#fff;font-size:.78rem;
+      background:linear-gradient(135deg,var(--violet),var(--pink));
+      flex:none;
+    }
+
+    main{
+      width:min(1180px,100%);
+      padding:40px clamp(18px,4vw,56px) 80px;
+      margin:0 auto;
+    }
+
+    .hero{
+      position:relative;
+      overflow:hidden;
+      background:
+        linear-gradient(135deg,rgba(115,87,217,.97),rgba(78,140,255,.92) 55%,rgba(57,198,212,.88));
+      color:white;
+      border-radius:34px;
+      padding:clamp(28px,5vw,64px);
+      box-shadow:var(--shadow);
+      margin-bottom:30px;
+    }
+    .hero:before,.hero:after{
+      content:"";
+      position:absolute;border-radius:50%;
+      background:rgba(255,255,255,.12);
+    }
+    .hero:before{width:270px;height:270px;right:-80px;top:-100px}
+    .hero:after{width:160px;height:160px;right:90px;bottom:-90px}
+    .hero .eyebrow{
+      display:inline-flex;align-items:center;gap:8px;
+      padding:7px 12px;border-radius:999px;
+      background:rgba(255,255,255,.16);
+      font-weight:800;font-size:.82rem;
+      letter-spacing:.05em;text-transform:uppercase;
+    }
+    .hero h2{
+      font-size:clamp(2.25rem,5vw,4.6rem);
+      line-height:1.02;
+      margin:18px 0 14px;
+      max-width:850px;
+    }
+    .hero p{
+      max-width:800px;
+      font-size:clamp(1rem,1.8vw,1.25rem);
+      opacity:.93;
+      margin:0;
+    }
+    .hero-grid{
+      display:grid;
+      grid-template-columns:repeat(3,1fr);
+      gap:12px;
+      margin-top:28px;
+      max-width:760px;
+    }
+    .hero-stat{
+      background:rgba(255,255,255,.13);
+      border:1px solid rgba(255,255,255,.2);
+      border-radius:18px;
+      padding:14px 16px;
+      backdrop-filter:blur(10px);
+    }
+    .hero-stat b{display:block;font-size:1.25rem}
+    .hero-stat span{font-size:.88rem;opacity:.85}
+
+    section{
+      scroll-margin-top:20px;
+      background:rgba(255,255,255,.94);
+      border:1px solid rgba(115,87,217,.10);
+      border-radius:var(--radius);
+      box-shadow:0 12px 34px rgba(50,45,110,.08);
+      padding:clamp(22px,4vw,38px);
+      margin:22px 0;
+    }
+
+    .section-head{
+      display:flex;gap:14px;align-items:flex-start;
+      margin-bottom:18px;
+    }
+    .section-index{
+      width:48px;height:48px;border-radius:16px;
+      display:grid;place-items:center;
+      color:white;font-weight:900;font-size:1.12rem;
+      background:linear-gradient(135deg,var(--violet),var(--pink));
+      box-shadow:0 10px 22px rgba(115,87,217,.22);
+      flex:none;
+    }
+    .section-head h3{
+      margin:0;
+      font-size:clamp(1.45rem,3vw,2.15rem);
+      line-height:1.2;
+    }
+    .section-head p{margin:5px 0 0;color:var(--muted)}
+
+    .rule-main{
+      background:linear-gradient(135deg,#fff3f9,#f2efff);
+      border:2px dashed rgba(115,87,217,.25);
+      border-radius:22px;
+      padding:22px;
+      font-size:1.13rem;
+      margin:16px 0;
+    }
+    .rule-main strong{color:var(--violet)}
+
+    .examples{
+      display:grid;
+      grid-template-columns:repeat(3,1fr);
+      gap:12px;
+      margin:16px 0 4px;
+    }
+    .example{
+      border-radius:18px;
+      padding:17px;
+      background:#f9f9ff;
+      border:1px solid var(--line);
+    }
+    .example .arrow{color:var(--violet);font-weight:900;padding:0 5px}
+    .example.bad{background:#fff7f7}
+    .example.bad .arrow{color:var(--red)}
+
+    .grid-2{
+      display:grid;
+      grid-template-columns:repeat(2,minmax(0,1fr));
+      gap:16px;
+    }
+    .grid-3{
+      display:grid;
+      grid-template-columns:repeat(3,minmax(0,1fr));
+      gap:16px;
+    }
+
+    .card{
+      border:1px solid var(--line);
+      border-radius:20px;
+      padding:20px;
+      background:linear-gradient(180deg,#fff,#fcfcff);
+    }
+    .card h4{
+      margin:0 0 8px;
+      font-size:1.08rem;
+    }
+    .card p{margin:0;color:#555870}
+    .icon{
+      width:42px;height:42px;border-radius:14px;
+      display:grid;place-items:center;
+      font-size:1.25rem;
+      margin-bottom:12px;
+      background:#efeaff;
+    }
+    .pink .icon{background:#ffe6f1}
+    .blue .icon{background:#e6f0ff}
+    .green .icon{background:#e1f8ef}
+    .yellow .icon{background:#fff3cf}
+
+    .note,.warning,.success{
+      border-radius:18px;
+      padding:16px 18px;
+      margin:16px 0;
+      border-left:6px solid;
+    }
+    .note{background:#f1efff;border-color:var(--violet)}
+    .warning{background:#fff5dd;border-color:var(--yellow)}
+    .success{background:#eafaf4;border-color:var(--green)}
+
+    .table-wrap{overflow:auto;border-radius:18px;border:1px solid var(--line);margin:16px 0}
+    table{
+      width:100%;
+      border-collapse:collapse;
+      min-width:620px;
+      background:#fff;
+    }
+    th,td{
+      padding:13px 15px;
+      text-align:left;
+      border-bottom:1px solid var(--line);
+      vertical-align:top;
+    }
+    th{
+      color:#fff;
+      background:linear-gradient(90deg,var(--violet),var(--violet-2));
+      font-size:.9rem;
+      letter-spacing:.01em;
+    }
+    tr:nth-child(even) td{background:#fafaff}
+    tr:last-child td{border-bottom:0}
+    td strong.good{color:var(--green)}
+    td strong.red{color:var(--red)}
+    td strong.violet{color:var(--violet)}
+
+    .chips{
+      display:flex;flex-wrap:wrap;gap:10px;margin-top:16px;
+    }
+    .chip{
+      padding:9px 13px;border-radius:999px;
+      background:#f1efff;border:1px solid #ded7ff;
+      font-weight:800;color:var(--violet);
+    }
+
+    .word-grid{
+      display:grid;
+      grid-template-columns:repeat(5,minmax(0,1fr));
+      gap:12px;
+      margin:18px 0;
+    }
+    .word-card{
+      border-radius:18px;
+      padding:16px 12px;
+      text-align:center;
+      background:linear-gradient(180deg,#fff,#f8f6ff);
+      border:1px solid #e4ddff;
+      transition:.2s ease;
+    }
+    .word-card:hover{transform:translateY(-4px);box-shadow:0 12px 24px rgba(115,87,217,.12)}
+    .word-card b{display:block;font-size:1.05rem}
+    .word-card span{display:block;color:var(--violet);font-size:1.2rem;font-weight:900;margin:3px 0}
+    .word-card small{color:var(--muted)}
+
+    .memory-chain{
+      display:flex;flex-wrap:wrap;align-items:center;gap:9px;
+      font-weight:900;font-size:1.05rem;margin:16px 0;
+    }
+    .memory-chain span{
+      padding:10px 13px;border-radius:14px;background:#f4f0ff;color:var(--violet);
+    }
+
+    .ending-grid{
+      display:grid;
+      grid-template-columns:repeat(4,minmax(0,1fr));
+      gap:12px;margin-top:16px;
+    }
+    .ending{
+      border-radius:20px;padding:18px;text-align:center;color:white;
+      min-height:145px;display:flex;flex-direction:column;justify-content:center;
+    }
+    .ending:nth-child(1){background:linear-gradient(135deg,#7357d9,#9b7cff)}
+    .ending:nth-child(2){background:linear-gradient(135deg,#4e8cff,#39c6d4)}
+    .ending:nth-child(3){background:linear-gradient(135deg,#ff7ab8,#ff5c7a)}
+    .ending:nth-child(4){background:linear-gradient(135deg,#28b887,#66d7b3)}
+    .ending b{font-size:1.35rem}
+    .ending span{opacity:.9}
+    .ending strong{display:block;font-size:1.65rem;margin:6px 0}
+
+    .verb-list{
+      columns:2;
+      column-gap:18px;
+    }
+    .verb{
+      break-inside:avoid;
+      display:block;
+      border:1px solid var(--line);
+      border-radius:16px;
+      padding:14px;
+      margin:0 0 12px;
+      background:#fff;
+    }
+    .verb b{color:var(--violet)}
+    .verb em{display:block;color:var(--muted);font-style:normal;font-size:.9rem;margin-top:3px}
+    .verb code{
+      display:block;
+      margin-top:7px;
+      white-space:normal;
+      font-family:inherit;
+      background:#f7f5ff;
+      padding:8px 10px;border-radius:10px;
+    }
+
+    .topbar{
+      display:none;
+      position:sticky;top:0;z-index:20;
+      padding:10px 14px;
+      background:rgba(255,255,255,.9);
+      backdrop-filter:blur(14px);
+      border-bottom:1px solid var(--line);
+    }
+    .topbar button{
+      border:0;border-radius:12px;padding:10px 13px;
+      background:linear-gradient(135deg,var(--violet),var(--pink));
+      color:white;font-weight:900;cursor:pointer;
+    }
+
+    .footer{
+      text-align:center;color:var(--muted);padding:34px 10px 10px;
+    }
+
+    @media (max-width:980px){
+      .layout{display:block}
+      aside{
+        position:fixed;left:-320px;top:0;width:290px;
+        transition:.25s ease;box-shadow:var(--shadow);
+      }
+      aside.open{left:0}
+      .topbar{display:flex;justify-content:space-between;align-items:center}
+      main{padding-top:24px}
+      .grid-3{grid-template-columns:1fr}
+      .word-grid{grid-template-columns:repeat(3,1fr)}
+      .ending-grid{grid-template-columns:repeat(2,1fr)}
+    }
+
+    @media (max-width:700px){
+      .hero-grid,.examples,.grid-2{grid-template-columns:1fr}
+      .word-grid{grid-template-columns:repeat(2,1fr)}
+      .verb-list{columns:1}
+      .ending-grid{grid-template-columns:1fr}
+      section{padding:20px}
+      .hero{border-radius:24px}
+      .section-index{width:42px;height:42px}
+    }
+
+    @media print{
+      aside,.topbar{display:none!important}
+      .layout{display:block}
+      body{background:white}
+      section,.hero{box-shadow:none;break-inside:avoid}
+      main{padding:0}
+    }
+  </style>
+</head>
+<body>
+  <div class="topbar">
+    <strong>Celownik</strong>
+    <button id="menuBtn">☰ Разделы</button>
+  </div>
+
+  <div class="layout">
+    <aside id="sidebar">
+      <div class="brand">
+        <small>Polski bez stresu</small>
+        <h1>Celownik</h1>
+        <p>Дательный падеж: komu? czemu?</p>
+      </div>
+
+      <div class="nav-title">Навигация</div>
+      <nav id="nav">
+        <a href="#rule"><span class="num">1</span>Главное правило</a>
+        <a href="#functions"><span class="num">2</span>Когда нужен celownik</a>
+        <a href="#u-list"><span class="num">3</span>Закрытый список на -u</a>
+        <a href="#traps"><span class="num">4</span>Ловушки</a>
+        <a href="#why"><span class="num">5</span>Как не ошибиться</a>
+        <a href="#four-u"><span class="num">6</span>Четыре -u</a>
+        <a href="#masc-a"><span class="num">7</span>Мужской род на -a</a>
+        <a href="#endings"><span class="num">8</span>Все окончания</a>
+        <a href="#verbs"><span class="num">9</span>Глаголы</a>
+      </nav>
+    </aside>
+
+    <main>
+      <header class="hero">
+        <span class="eyebrow">🇵🇱 польская грамматика</span>
+        <h2>Дательный падеж<br>Celownik</h2>
+        <p>Полная теория до упражнений: функции, окончания, исключения, ловушки и глаголы, после которых нужен вопрос <b>komu? czemu?</b></p>
+        <div class="hero-grid">
+          <div class="hero-stat"><b>-owi</b><span>основное окончание</span></div>
+          <div class="hero-stat"><b>-u</b><span>небольшой список</span></div>
+          <div class="hero-stat"><b>-om</b><span>множественное число</span></div>
+        </div>
+      </header>
+
+      <section id="rule">
+        <div class="section-head">
+          <div class="section-index">1</div>
+          <div>
+            <h3>Главное правило</h3>
+            <p>Когда выбирать <b>-owi</b>, а когда <b>-u</b></p>
+          </div>
+        </div>
+
+        <div class="rule-main">
+          По умолчанию существительные мужского рода в <b>celowniku</b> получают окончание <strong>-owi</strong>.
+          Окончание <strong>-u</strong> используется только у небольшого закрытого списка слов.
+        </div>
+
+        <div class="examples">
+          <div class="example"><b>student</b><span class="arrow">→</span><b>studentowi</b></div>
+          <div class="example"><b>lekarz</b><span class="arrow">→</span><b>lekarzowi</b></div>
+          <div class="example"><b>komputer</b><span class="arrow">→</span><b>komputerowi</b></div>
+          <div class="example bad"><b>pies</b><span class="arrow">→</span><b>psu</b></div>
+          <div class="example bad"><b>kot</b><span class="arrow">→</span><b>kotu</b></div>
+        </div>
+
+        <div class="note">
+          <b>Важно:</b> окончание <b>-owie</b> не относится к дательному падежу. Это форма именительного падежа множественного числа: <i>panowie, profesorowie, ojcowie</i>.
+        </div>
+      </section>
+
+      <section id="functions">
+        <div class="section-head">
+          <div class="section-index">2</div>
+          <div>
+            <h3>Когда нужен celownik</h3>
+            <p>Основные функции дательного падежа</p>
+          </div>
+        </div>
+
+        <div class="grid-2">
+          <div class="card blue">
+            <div class="icon">🎁</div>
+            <h4>Адресат действия</h4>
+            <p>Тот, кому что-то дают, покупают, показывают, рассказывают.</p>
+            <div class="note"><i>Mąż kupił żonie samochód.</i><br>Муж купил жене машину.</div>
+          </div>
+
+          <div class="card pink">
+            <div class="icon">🌡️</div>
+            <h4>Состояние: komu + наречие</h4>
+            <p><i>Dobrze mi, zimno mi, gorąco mi, smutno mu, wygodnie jej.</i></p>
+            <div class="warning">
+              <b>Tej kobiecie jest gorąco</b> = женщине жарко.<br>
+              <b>Ta kobieta jest gorąca</b> = женщина «горячая», привлекательная.
+            </div>
+          </div>
+
+          <div class="card green">
+            <div class="icon">🧭</div>
+            <h4>После определённых предлогов</h4>
+            <p>Некоторые предлоги требуют после себя дательного падежа.</p>
+          </div>
+
+          <div class="card yellow">
+            <div class="icon">🔁</div>
+            <h4>Иногда вместо dla + dopełniacz</h4>
+            <p><i>Kupiłam Łukaszowi lody</i> = <i>Kupiłam lody dla Łukasza.</i></p>
+            <div class="warning">Такая замена возможна не со всеми глаголами.</div>
+          </div>
+        </div>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>Предлог</th><th>Значение</th><th>Пример</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><b>przeciw(ko)</b></td><td>против</td><td>Nie zaszczepiłam się przeciwko grypie.</td></tr>
+              <tr><td><b>dzięki</b></td><td>благодаря</td><td>Dzięki Tinderowi Łukasz poznał wspaniałą kobietę.</td></tr>
+              <tr><td><b>wbrew</b></td><td>вопреки</td><td>Wbrew rodzicom Kasia zamieszkała z Łukaszem.</td></tr>
+              <tr><td><b>naprzeciw</b></td><td>навстречу</td><td>Wyszłam naprzeciw oczekiwaniom szefa.</td></tr>
+              <tr><td><b>ku</b></td><td>к, по направлению</td><td>Słońce chyliło się ku zachodowi.</td></tr>
+              <tr><td><b>na przekór</b></td><td>наперекор</td><td>Zrobił to na przekór wszystkim.</td></tr>
+              <tr><td><b>na złość</b></td><td>назло</td><td>Brat na złość siostrze powiedział o jej sekrecie.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section id="u-list">
+        <div class="section-head">
+          <div class="section-index">3</div>
+          <div>
+            <h3>Закрытый список слов на -u</h3>
+            <p>Эти формы лучше выучить как готовые пары</p>
+          </div>
+        </div>
+
+        <div class="word-grid">
+          <div class="word-card"><b>Bóg</b><span>Bogu</span><small>Бог</small></div>
+          <div class="word-card"><b>brat</b><span>bratu</span><small>брат</small></div>
+          <div class="word-card"><b>chłop</b><span>chłopu</span><small>мужик</small></div>
+          <div class="word-card"><b>chłopiec</b><span>chłopcu</span><small>мальчик</small></div>
+          <div class="word-card"><b>diabeł</b><span>diabłu</span><small>дьявол</small></div>
+          <div class="word-card"><b>kot</b><span>kotu</span><small>кот</small></div>
+          <div class="word-card"><b>ksiądz</b><span>księdzu</span><small>священник</small></div>
+          <div class="word-card"><b>książę</b><span>księciu</span><small>князь</small></div>
+          <div class="word-card"><b>lew</b><span>lwu</span><small>лев</small></div>
+          <div class="word-card"><b>łeb</b><span>łbu</span><small>башка</small></div>
+          <div class="word-card"><b>ojciec</b><span>ojcu</span><small>отец</small></div>
+          <div class="word-card"><b>pan</b><span>panu</span><small>господин</small></div>
+          <div class="word-card"><b>pies</b><span>psu</span><small>собака</small></div>
+          <div class="word-card"><b>świat</b><span>światu</span><small>мир</small></div>
+          <div class="word-card"><b>wół</b><span>wołu</span><small>вол</small></div>
+        </div>
+
+        <div class="note">
+          Реже добавляют: <b>czart → czartu</b> и <b>pop → popu</b>.
+        </div>
+
+        <h4>Слова с двумя допустимыми формами</h4>
+        <div class="chips">
+          <span class="chip">kat → katu / katowi</span>
+          <span class="chip">orzeł → orłu / orłowi</span>
+          <span class="chip">osioł → osłu / osłowi</span>
+          <span class="chip">człek → człeku / człekowi</span>
+        </div>
+
+        <h4 style="margin-top:24px">Ассоциация для запоминания</h4>
+        <div class="memory-chain">
+          <span>семья</span> → <span>религия</span> → <span>мир</span> → <span>животные</span>
+        </div>
+        <div class="success">
+          <b>bratu, chłopcu, ojcu, panu, Bogu, księdzu, diabłu, światu, psu, kotu, lwu</b>
+        </div>
+      </section>
+
+      <section id="traps">
+        <div class="section-head">
+          <div class="section-index">4</div>
+          <div>
+            <h3>Ловушки: слова, которые -u не берут</h3>
+            <p>Родство, профессия или титул сами по себе ничего не решают</p>
+          </div>
+        </div>
+
+        <div class="warning">
+          Правило не тематическое, а списочное. Если слова нет в закрытом списке на <b>-u</b>, обычно выбираем <b>-owi</b>.
+        </div>
+
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Слово</th><th>Правильно</th><th>Частая ошибка</th></tr></thead>
+            <tbody>
+              <tr><td>syn</td><td><strong class="good">synowi</strong></td><td><strong class="red">synu</strong></td></tr>
+              <tr><td>dziadek</td><td><strong class="good">dziadkowi</strong></td><td><strong class="red">dziadku</strong></td></tr>
+              <tr><td>wnuk</td><td><strong class="good">wnukowi</strong></td><td><strong class="red">wnuku</strong></td></tr>
+              <tr><td>mąż</td><td><strong class="good">mężowi</strong></td><td><strong class="red">mężu</strong></td></tr>
+              <tr><td>król</td><td><strong class="good">królowi</strong></td><td><strong class="red">królu</strong></td></tr>
+              <tr><td>mistrz</td><td><strong class="good">mistrzowi</strong></td><td><strong class="red">mistrzu</strong></td></tr>
+              <tr><td>nauczyciel</td><td><strong class="good">nauczycielowi</strong></td><td><strong class="red">nauczycielu</strong></td></tr>
+              <tr><td>lekarz</td><td><strong class="good">lekarzowi</strong></td><td><strong class="red">lekarzu</strong></td></tr>
+              <tr><td>dzień</td><td><strong class="good">dniowi</strong></td><td><strong class="red">dniu</strong></td></tr>
+              <tr><td>koń</td><td><strong class="good">koniowi</strong></td><td><strong class="red">koniu</strong></td></tr>
+              <tr><td>gość</td><td><strong class="good">gościowi</strong></td><td><strong class="red">gościu</strong></td></tr>
+              <tr><td>kamień</td><td><strong class="good">kamieniowi</strong></td><td><strong class="red">kamieniu</strong></td></tr>
+              <tr><td>gołąb</td><td><strong class="good">gołębiowi</strong></td><td><strong class="red">gołębiu</strong></td></tr>
+              <tr><td>dom</td><td><strong class="good">domowi</strong></td><td><strong class="red">domu</strong></td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="note">
+          Формы <i>synu, dziadku, koniu, domu</i> существуют, но это могут быть формы местного, звательного или родительного падежа — не celownik.
+        </div>
+      </section>
+
+      <section id="why">
+        <div class="section-head">
+          <div class="section-index">5</div>
+          <div>
+            <h3>Почему -u и как не ошибиться</h3>
+            <p>Практические ориентиры</p>
+          </div>
+        </div>
+
+        <div class="grid-2">
+          <div class="card">
+            <div class="icon">1</div>
+            <h4>Большинство слов на -u короткие</h4>
+            <p>Чаще всего односложные: <i>pan, pies, kot, lew, brat, chłop, wół, łeb, świat, Bóg</i>.</p>
+          </div>
+          <div class="card">
+            <div class="icon">2</div>
+            <h4>Но односложность не гарантирует -u</h4>
+            <p><i>dom → domu</i> в родительном, но в дательном: <b>domowi</b>.</p>
+          </div>
+          <div class="card">
+            <div class="icon">3</div>
+            <h4>Мягкая основа → -owi</h4>
+            <p><i>dzień → dniowi, koń → koniowi, gość → gościowi, kamień → kamieniowi</i>.</p>
+          </div>
+          <div class="card">
+            <div class="icon">4</div>
+            <h4>Сомневаешься — выбирай -owi</h4>
+            <p>Это самое безопасное правило для новых слов.</p>
+          </div>
+        </div>
+      </section>
+
+      <section id="four-u">
+        <div class="section-head">
+          <div class="section-index">6</div>
+          <div>
+            <h3>Не путай четыре -u</h3>
+            <p>Одна и та же форма может относиться к разным падежам</p>
+          </div>
+        </div>
+
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Падеж</th><th>pan</th><th>syn</th></tr></thead>
+            <tbody>
+              <tr><td>Mianownik — kto?</td><td>pan</td><td>syn</td></tr>
+              <tr><td>Dopełniacz — kogo? czego?</td><td>pana</td><td>syna</td></tr>
+              <tr><td>Celownik — komu?</td><td><strong class="red">panu</strong></td><td><strong class="violet">synowi</strong></td></tr>
+              <tr><td>Biernik — kogo? co?</td><td>pana</td><td>syna</td></tr>
+              <tr><td>Narzędnik — z kim?</td><td>panem</td><td>synem</td></tr>
+              <tr><td>Miejscownik — o kim?</td><td>o panu</td><td>o synu</td></tr>
+              <tr><td>Wołacz</td><td>panie!</td><td>synu!</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="success">
+          У <b>pan</b> дательный и местный совпадают: <i>panu</i>. У <b>syn</b> дательный — <i>synowi</i>, а <i>synu</i> — местный или звательный.
+        </div>
+      </section>
+
+      <section id="masc-a">
+        <div class="section-head">
+          <div class="section-index">7</div>
+          <div>
+            <h3>Мужской род на -a</h3>
+            <p>Склоняется как женский род</p>
+          </div>
+        </div>
+
+        <p>Слова мужского рода на <b>-a</b> — <i>tata, kolega, poeta, mężczyzna, kierowca, artysta, dentysta, monarcha, starosta</i> — в дательном склоняются как существительные женского рода.</p>
+
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Mianownik</th><th>Celownik</th><th>Чередование</th></tr></thead>
+            <tbody>
+              <tr><td>tata</td><td><strong class="good">tacie</strong></td><td>t → c</td></tr>
+              <tr><td>kolega</td><td><strong class="good">koledze</strong></td><td>g → dz</td></tr>
+              <tr><td>poeta</td><td><strong class="good">poecie</strong></td><td>t → c</td></tr>
+              <tr><td>artysta</td><td><strong class="good">artyście</strong></td><td>st → ść</td></tr>
+              <tr><td>dentysta</td><td><strong class="good">dentyście</strong></td><td>st → ść</td></tr>
+              <tr><td>kierowca</td><td><strong class="good">kierowcy</strong></td><td>твёрдое c → -y</td></tr>
+              <tr><td>mężczyzna</td><td><strong class="good">mężczyźnie</strong></td><td>zn → źni</td></tr>
+              <tr><td>monarcha</td><td><strong class="good">monarsze</strong></td><td>ch → sz</td></tr>
+              <tr><td>starosta</td><td><strong class="good">staroście</strong></td><td>st → ść</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section id="endings">
+        <div class="section-head">
+          <div class="section-index">8</div>
+          <div>
+            <h3>Все окончания celownika</h3>
+            <p>Существительное + прилагательное</p>
+          </div>
+        </div>
+
+        <div class="ending-grid">
+          <div class="ending"><b>Мужской род</b><strong>-owi / -u</strong><span>прилагательное: -emu</span></div>
+          <div class="ending"><b>Средний род</b><strong>-u</strong><span>прилагательное: -emu</span></div>
+          <div class="ending"><b>Женский род</b><strong>= miejscownik</strong><span>прилагательное: -ej</span></div>
+          <div class="ending"><b>Множественное</b><strong>-om</strong><span>прилагательное: -ym / -im</span></div>
+        </div>
+
+        <div class="grid-2" style="margin-top:18px">
+          <div class="card">
+            <h4>Прилагательные</h4>
+            <p>Мужской и средний род: <b>-emu</b>. После <i>k, g</i> → <b>-iemu</b>: <i>polskiemu, drogiemu</i>.</p>
+          </div>
+          <div class="card">
+            <h4>Средний род</h4>
+            <p>Всегда <b>-u</b>: <i>dziecko → dziecku, zadanie → zadaniu, okno → oknu</i>.</p>
+          </div>
+          <div class="card">
+            <h4>Женский род</h4>
+            <p>Совпадает с местным: <i>dziewczyna → dziewczynie, babcia → babci, praca → pracy</i>.</p>
+          </div>
+          <div class="card">
+            <h4>Множественное число</h4>
+            <p>Для всех родов: <b>-om</b>. Примеры: <i>studentom, kotom, dzieciom, paniom</i>.</p>
+          </div>
+        </div>
+
+        <div class="note">
+          <b>Мнемоника:</b> множественное число — <b>-om</b>, как протяжное «оммм».
+        </div>
+      </section>
+
+      <section id="verbs">
+        <div class="section-head">
+          <div class="section-index">9</div>
+          <div>
+            <h3>Глаголы, требующие celownika</h3>
+            <p>Запоминай глагол сразу вместе с вопросом komu?</p>
+          </div>
+        </div>
+
+        <div class="verb-list">
+          <span class="verb"><b>dawać</b> — давать<em>coś komuś</em><code>Daję prezent bratu.</code></span>
+          <span class="verb"><b>kupować / kupić</b> — покупать<em>coś komuś</em><code>Mąż kupił żonie samochód.</code></span>
+          <span class="verb"><b>przynosić / przynieść</b> — приносить<em>coś komuś</em><code>Mikołaj przyniósł dzieciom prezenty.</code></span>
+          <span class="verb"><b>pożyczać</b> — одалживать<em>coś komuś</em><code>Pożyczam samochód przyjacielowi.</code></span>
+          <span class="verb"><b>dziękować</b> — благодарить<em>komuś za coś</em><code>Dziękuję nauczycielowi.</code></span>
+          <span class="verb"><b>dedykować</b> — посвящать<em>coś komuś</em><code>Dedykuję ten film widzom.</code></span>
+          <span class="verb"><b>pomagać</b> — помогать<em>komuś w czymś</em><code>Pomagam ojcu w ogrodzie.</code></span>
+          <span class="verb"><b>ufać</b> — доверять<em>komuś</em><code>Ufam przyjacielowi.</code></span>
+          <span class="verb"><b>wierzyć</b> — верить<em>komuś</em><code>Wierzę lekarzowi.</code></span>
+          <span class="verb"><b>przyglądać się</b> — присматриваться<em>komuś / czemuś</em><code>Przyglądam się obrazowi.</code></span>
+          <span class="verb"><b>przeszkadzać</b> — мешать<em>komuś</em><code>Nie przeszkadzaj bratu.</code></span>
+          <span class="verb"><b>życzyć</b> — желать<em>komuś czegoś</em><code>Życzę koledze sukcesu.</code></span>
+          <span class="verb"><b>gratulować</b> — поздравлять<em>komuś</em><code>Gratuluję zwycięzcy.</code></span>
+          <span class="verb"><b>kibicować</b> — болеть за<em>komuś</em><code>Kibicuję tej drużynie.</code></span>
+          <span class="verb"><b>opowiadać</b> — рассказывать<em>coś komuś</em><code>Dziadek opowiadał wnukowi legendę.</code></span>
+          <span class="verb"><b>pokazywać</b> — показывать<em>coś komuś</em><code>Pokazał turyście drogę.</code></span>
+          <span class="verb"><b>przekazywać</b> — передавать<em>coś komuś</em><code>Przekazał wiadomość dyrektorowi.</code></span>
+          <span class="verb"><b>sprzedawać</b> — продавать<em>coś komuś</em><code>Sprzedał sąsiadowi rower.</code></span>
+          <span class="verb"><b>przedstawiać</b> — представлять<em>kogoś komuś</em><code>Przedstawił mnie rodzicom.</code></span>
+          <span class="verb"><b>oświadczyć się</b> — сделать предложение<em>komuś</em><code>Oświadczył się dziewczynie.</code></span>
+          <span class="verb"><b>wybaczać</b> — прощать<em>komuś</em><code>Wybaczam ojcu.</code></span>
+          <span class="verb"><b>zazdrościć</b> — завидовать<em>komuś</em><code>Zazdroszczę koledze.</code></span>
+          <span class="verb"><b>radzić</b> — советовать<em>komuś</em><code>Radzę klientowi.</code></span>
+          <span class="verb"><b>obiecywać</b> — обещать<em>coś komuś</em><code>Obiecuję dziecku.</code></span>
+          <span class="verb"><b>dziwić się</b> — удивляться<em>komuś / czemuś</em><code>Dziwię się światu.</code></span>
+          <span class="verb"><b>sprzyjać</b> — благоприятствовать<em>komuś / czemuś</em><code>Pogoda sprzyja turystom.</code></span>
+          <span class="verb"><b>służyć</b> — служить<em>komuś</em><code>Pies służy panu.</code></span>
+          <span class="verb"><b>podobać się</b> — нравиться<em>komuś</em><code>Film podobał się widzom.</code></span>
+          <span class="verb"><b>smakować</b> — быть вкусным<em>komuś</em><code>Zupa smakuje dziecku.</code></span>
+        </div>
+
+        <div class="success">
+          С этими глаголами дательный падеж — безопасный и естественный выбор.
+        </div>
+      </section>
+
+      <div class="footer">
+        Красочный конспект по теме <b>Celownik</b> · теория без упражнений
+      </div>
+    </main>
+  </div>
+
+  <script>
+    const sidebar = document.getElementById('sidebar');
+    const menuBtn = document.getElementById('menuBtn');
+    menuBtn?.addEventListener('click', () => sidebar.classList.toggle('open'));
+
+    const links = [...document.querySelectorAll('nav a')];
+    const sections = [...document.querySelectorAll('main section')];
+
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if(entry.isIntersecting){
+          links.forEach(a => a.classList.remove('active'));
+          const active = document.querySelector(`nav a[href="#${entry.target.id}"]`);
+          active?.classList.add('active');
+        }
+      });
+    }, {rootMargin:'-35% 0px -55% 0px', threshold:0});
+
+    sections.forEach(section => observer.observe(section));
+    links.forEach(link => link.addEventListener('click', () => sidebar.classList.remove('open')));
+  </script>
+</body>
+</html>'''
+
+out = Path('/mnt/data/celownik_teoria_site.html')
+out.write_text(html, encoding='utf-8')
+print(f"Создан файл: {out}")
